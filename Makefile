@@ -18,14 +18,13 @@ check:
 
 .PHONY: vendor
 vendor:
-	glide update --strip-vendor
-	glide-vc
+	go mod vendor
 
 clean:
 	rm -rf bin
 
-bin/%: LDFLAGS=-X github.com/aaronlevy/kube-controller-demo/common.Version=$(shell $(CURDIR)/git-version.sh)
+bin/%: LDFLAGS=-X github.com/vtomasr5/kubee-controller-demo/common.Version=$(shell $(CURDIR)/git-version.sh)
 bin/%: $(GOFILES)
 	mkdir -p $(dir $@)
-	GOOS=$(word 1, $(subst /, ,$*)) GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o $@ github.com/aaronlevy/kube-controller-demo/$(notdir $@)
+	GOOS=$(word 1, $(subst /, ,$*)) GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o $@ github.com/vtomasr5/kube-controller-demo/$(notdir $@)
 

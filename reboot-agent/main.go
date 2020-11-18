@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"time"
 
-	"github.com/coreos/go-systemd/login1"
+	"github.com/coreos/go-systemd/v22/login1"
 	"github.com/golang/glog"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,7 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/aaronlevy/kube-controller-demo/common"
+	"github.com/vtomasr5/kube-controller-demo/common"
 )
 
 const nodeNameEnv = "NODE_NAME"
@@ -88,12 +89,12 @@ func newRebootAgent(nodeName string, client kubernetes.Interface, dbusConn *logi
 			ListFunc: func(lo metav1.ListOptions) (runtime.Object, error) {
 				// Add the field selector containgin our node name to our list options
 				lo.FieldSelector = nodeNameFS
-				return client.Core().Nodes().List(lo)
+				return client.CoreV1().Nodes().List(context.Background(), lo)
 			},
 			WatchFunc: func(lo metav1.ListOptions) (watch.Interface, error) {
 				// Add the field selector containgin our node name to our list options
 				lo.FieldSelector = nodeNameFS
-				return client.Core().Nodes().Watch(lo)
+				return client.CoreV1().Nodes().Watch(context.Background(), lo)
 			},
 		},
 		// The types of objects this informer will return
@@ -144,7 +145,7 @@ func (a *rebootAgent) handleUpdate(oldObj, newObj interface{}) {
 		delete(node.Annotations, common.RebootAnnotation)
 
 		// Update the node object
-		_, err := a.client.Core().Nodes().Update(node)
+		_, err := a.client.CoreV1().Nodes().Update(context.Background(), node, metav1.UpdateOptions{})
 		if err != nil {
 			glog.Errorf("Failed to set %s annotation: %v", common.RebootInProgressAnnotation, err)
 			return // If we cannot update the state - do not reboot
@@ -162,7 +163,7 @@ func (a *rebootAgent) handleUpdate(oldObj, newObj interface{}) {
 	if rebootInProgress(node) {
 		glog.Info("Clearing in-progress reboot annotation")
 		delete(node.Annotations, common.RebootInProgressAnnotation)
-		_, err := a.client.Core().Nodes().Update(node)
+		_, err := a.client.CoreV1().Nodes().Update(context.Background(), node, metav1.UpdateOptions{})
 		if err != nil {
 			glog.Errorf("Failed to remove %s annotation: %v", common.RebootInProgressAnnotation, err)
 			return

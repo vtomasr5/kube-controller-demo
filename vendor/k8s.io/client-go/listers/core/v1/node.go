@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import (
 )
 
 // NodeLister helps list Nodes.
+// All objects returned here must be treated as read-only.
 type NodeLister interface {
 	// List lists all Nodes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Node, err error)
 	// Get retrieves the Node from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Node, error)
 	NodeListerExpansion
 }

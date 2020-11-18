@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"time"
 
-	"github.com/aaronlevy/kube-controller-demo/common"
 	"github.com/golang/glog"
-	"k8s.io/api/core/v1"
+	"github.com/vtomasr5/kube-controller-demo/common"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -69,10 +70,10 @@ func newRebootController(client kubernetes.Interface) *rebootController {
 				// We do not add any selectors because we want to watch all nodes.
 				// This is so we can determine the total count of "unavailable" nodes.
 				// However, this could also be implemented using multiple informers (or better, shared-informers)
-				return client.Core().Nodes().List(lo)
+				return client.CoreV1().Nodes().List(context.Background(), lo)
 			},
 			WatchFunc: func(lo meta_v1.ListOptions) (watch.Interface, error) {
-				return client.Core().Nodes().Watch(lo)
+				return client.CoreV1().Nodes().Watch(context.Background(), lo)
 			},
 		},
 		// The types of objects this informer will return
@@ -185,7 +186,7 @@ func (c *rebootController) process(key string) error {
 
 	glog.Infof("Marking node %s for reboot", node.Name)
 	nodeCopy.Annotations[common.RebootAnnotation] = ""
-	if _, err := c.client.Core().Nodes().Update(nodeCopy); err != nil {
+	if _, err := c.client.CoreV1().Nodes().Update(context.Background(), nodeCopy, meta_v1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("Failed to set %s annotation: %v", common.RebootAnnotation, err)
 	}
 	return nil
