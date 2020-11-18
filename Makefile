@@ -18,8 +18,7 @@ check:
 
 .PHONY: vendor
 vendor:
-	glide update --strip-vendor
-	glide-vc
+	go mod vendor
 
 clean:
 	rm -rf bin
