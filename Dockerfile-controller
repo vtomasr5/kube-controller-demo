@@ -1,3 +1,9 @@
-FROM alpine
+FROM golang:1.15-alpine as builder
+WORKDIR /app
+RUN apk update && apk add make
+COPY . .
+RUN make all
 
-COPY bin/linux/reboot-controller /reboot-controller
+FROM alpine:3.12
+COPY --from=builder /app/bin/linux/reboot-controller /reboot-controller
+CMD ["/reboot-controller"]

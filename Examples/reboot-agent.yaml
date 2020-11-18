@@ -14,8 +14,7 @@ spec:
       containers:
       - name: reboot-agent
         image: vtomasr5/demo-reboot-agent:latest
-        command:
-        - ./reboot-agent
+        imagePullPolicy: Always
         env:
           - name: NODE_NAME
             valueFrom:

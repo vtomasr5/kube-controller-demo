@@ -1245,7 +1245,7 @@ func newVerbose(level Level, b bool) Verbose {
 // The returned value is a struct of type Verbose, which implements Info, Infoln
 // and Infof. These methods will write to the Info log if called.
 // Thus, one may write either
-//	if log.V(2).Enabled() { klog.Info("log this") }
+//	if glog.V(2).Enabled() { klog.Info("log this") }
 // or
 //	klog.V(2).Info("log this")
 // The second form is shorter but the first is cheaper if logging is off because it does

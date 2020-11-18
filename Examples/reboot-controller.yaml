@@ -15,5 +15,4 @@ spec:
       containers:
       - name: reboot-controller
         image: vtomasr5/demo-reboot-controller:latest
-        command:
-        - ./reboot-controller
+        imagePullPolicy: Always
