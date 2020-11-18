@@ -11,6 +11,7 @@ images: bin/linux/reboot-agent bin/linux/reboot-controller
 	docker build -f Dockerfile-controller -t vtomasr5/demo-reboot-controller:$(GVERSION) .
 	docker build -f Dockerfile-controller -t vtomasr5/demo-reboot-controller:latest .
 
+push: GVERSION=$(shell $(CURDIR)/git-version.sh)
 push:
 	docker push vtomasr5/demo-reboot-agent:$(GVERSION)
 	docker push vtomasr5/demo-reboot-agent:latest
