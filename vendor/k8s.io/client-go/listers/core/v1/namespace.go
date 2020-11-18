@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import (
 )
 
 // NamespaceLister helps list Namespaces.
+// All objects returned here must be treated as read-only.
 type NamespaceLister interface {
 	// List lists all Namespaces in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Namespace, err error)
 	// Get retrieves the Namespace from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Namespace, error)
 	NamespaceListerExpansion
 }

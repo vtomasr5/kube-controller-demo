@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import (
 )
 
 // PersistentVolumeLister helps list PersistentVolumes.
+// All objects returned here must be treated as read-only.
 type PersistentVolumeLister interface {
 	// List lists all PersistentVolumes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.PersistentVolume, err error)
 	// Get retrieves the PersistentVolume from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.PersistentVolume, error)
 	PersistentVolumeListerExpansion
 }
