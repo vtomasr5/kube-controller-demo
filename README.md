@@ -6,7 +6,7 @@ The goal of this project is to demonstrate how you can build a simple Kubernetes
 
 This is not meant as a project to be used directly - but rather as a reference point to build your own custom controllers.
 
-This example is currently based off client-go v0.19.0
+This example is currently based off client-go v0.19.4
 
 ## Helpful Resources
 
