@@ -4,9 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/vtomasr5/kube-controller-demo/common"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,13 +36,13 @@ func main() {
 	// Build the client config - optionally using a provided kubeconfig file.
 	config, err := common.GetClientConfig(*kubeconfig)
 	if err != nil {
-		glog.Fatalf("Failed to load client config: %v", err)
+		log.Fatalf("Failed to load client config: %v", err)
 	}
 
 	// Construct the Kubernetes client
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		glog.Fatalf("Failed to create kubernetes client: %v", err)
+		log.Fatalf("Failed to create kubernetes client: %v", err)
 	}
 
 	stopCh := make(chan struct{})
@@ -113,13 +113,13 @@ func newRebootController(client kubernetes.Interface) *rebootController {
 
 func (c *rebootController) Run(stopCh chan struct{}) {
 	defer c.queue.ShutDown()
-	glog.Info("Starting RebootController")
+	log.Printf("Starting RebootController")
 
 	go c.informer.Run(stopCh)
 
 	// Wait for all caches to be synced, before processing items from the queue is started
 	if !cache.WaitForCacheSync(stopCh, c.informer.HasSynced) {
-		glog.Error(fmt.Errorf("Timed out waiting for caches to sync"))
+		log.Fatalf("Timed out waiting for caches to sync")
 		return
 	}
 
@@ -127,7 +127,7 @@ func (c *rebootController) Run(stopCh chan struct{}) {
 	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	<-stopCh
-	glog.Info("Stopping Reboot Controller")
+	log.Printf("Stopping Reboot Controller")
 }
 
 func (c *rebootController) runWorker() {
@@ -158,7 +158,7 @@ func (c *rebootController) process(key string) error {
 		return fmt.Errorf("failed to retrieve node by key %q: %v", key, err)
 	}
 
-	glog.V(4).Infof("Received update of node: %s", node.GetName())
+	log.Printf("Received update of node: %s", node.GetName())
 	if node.Annotations == nil {
 		return nil // If node has no annotations, then it doesn't need a reboot
 	}
@@ -184,7 +184,7 @@ func (c *rebootController) process(key string) error {
 		return fmt.Errorf("Failed to make copy of node: %v", err)
 	}
 
-	glog.Infof("Marking node %s for reboot", node.Name)
+	log.Printf("Marking node %s for reboot", node.Name)
 	nodeCopy.Annotations[common.RebootAnnotation] = ""
 	if _, err := c.client.CoreV1().Nodes().Update(context.Background(), nodeCopy, meta_v1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("Failed to set %s annotation: %v", common.RebootAnnotation, err)
@@ -203,7 +203,7 @@ func (c *rebootController) handleErr(err error, key interface{}) {
 
 	// This controller retries 5 times if something goes wrong. After that, it stops trying.
 	if c.queue.NumRequeues(key) < 5 {
-		glog.Infof("Error processing node %v: %v", key, err)
+		log.Printf("Error processing node %v: %v", key, err)
 
 		// Re-enqueue the key rate limited. Based on the rate limiter on the
 		// queue and the re-enqueue history, the key will be processed later again.
@@ -212,7 +212,7 @@ func (c *rebootController) handleErr(err error, key interface{}) {
 	}
 
 	c.queue.Forget(key)
-	glog.Errorf("Dropping node %q out of the queue: %v", key, err)
+	log.Fatalf("Dropping node %q out of the queue: %v", key, err)
 }
 
 func (c *rebootController) unavailableNodeCount() (int, error) {

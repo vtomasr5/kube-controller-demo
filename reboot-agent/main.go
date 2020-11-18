@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"time"
 
 	"github.com/coreos/go-systemd/v22/login1"
-	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -36,25 +36,25 @@ func main() {
 	// This environment variable is assumed to be set via the pod downward-api, however it can be manually set during testing
 	nodeName := os.Getenv(nodeNameEnv)
 	if nodeName == "" {
-		glog.Fatalf("Missing required environment variable %s", nodeNameEnv)
+		log.Fatalf("Missing required environment variable %s", nodeNameEnv)
 	}
 
 	// Build the client config - optionally using a provided kubeconfig file.
 	config, err := common.GetClientConfig(*kubeconfig)
 	if err != nil {
-		glog.Fatalf("Failed to load client config: %v", err)
+		log.Fatalf("Failed to load client config: %v", err)
 	}
 
 	// Construct the Kubernetes client
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		glog.Fatalf("Failed to create kubernetes client: %v", err)
+		log.Fatalf("Failed to create kubernetes client: %v", err)
 	}
 
 	// Open a dbus connection for triggering a system reboot
 	dbusConn, err := login1.New()
 	if err != nil {
-		glog.Fatalf("Failed to create dbus connection")
+		log.Fatalf("Failed to create dbus connection")
 	}
 
 	agent := newRebootAgent(nodeName, client, dbusConn)
@@ -64,7 +64,7 @@ func main() {
 	// If we get an event for "self" that is the only state we need, and no further cache syncing
 	// is required. If we do start caring about cache state, we should implement a workqueue
 	// and wait to process queue until cached has synced. See reboot-controller for example.
-	glog.Info("Starting Reboot Agent")
+	log.Printf("Starting Reboot Agent")
 	agent.controller.Run(wait.NeverStop)
 }
 
@@ -130,14 +130,14 @@ func (a *rebootAgent) handleUpdate(oldObj, newObj interface{}) {
 	// Additionally, if using SharedInformers - you are modifying a local cache that could be used by other controllers.
 	node, err := common.CopyObjToNode(newObj)
 	if err != nil {
-		glog.Errorf("Failed to copy Node object: %v", err)
+		log.Fatalf("Failed to copy Node object: %v", err)
 		return
 	}
 
-	glog.V(4).Infof("Received update for node: %s", node.Name)
+	log.Printf("Received update for node: %s", node.Name)
 
 	if shouldReboot(node) {
-		glog.Info("Reboot requested...")
+		log.Printf("Reboot requested...")
 
 		// Set "reboot in progress" and clear reboot needed / reboot
 		node.Annotations[common.RebootInProgressAnnotation] = ""
@@ -147,13 +147,13 @@ func (a *rebootAgent) handleUpdate(oldObj, newObj interface{}) {
 		// Update the node object
 		_, err := a.client.CoreV1().Nodes().Update(context.Background(), node, metav1.UpdateOptions{})
 		if err != nil {
-			glog.Errorf("Failed to set %s annotation: %v", common.RebootInProgressAnnotation, err)
+			log.Fatalf("Failed to set %s annotation: %v", common.RebootInProgressAnnotation, err)
 			return // If we cannot update the state - do not reboot
 		}
 
 		// TODO(aaron): We should drain the node (this is really just for demo purposes - but would be good to demonstrate)
 
-		glog.Infof("Rebooting node...")
+		log.Printf("Rebooting node...")
 		a.dbusConn.Reboot(false)
 		select {} // Wait for machine to reboot
 	}
@@ -161,11 +161,11 @@ func (a *rebootAgent) handleUpdate(oldObj, newObj interface{}) {
 	// Reboot complete - clear the rebootInProgress annotation
 	// This is a niave assumption: the call to reboot is blocking - if we've reached this, assume the node has restarted.
 	if rebootInProgress(node) {
-		glog.Info("Clearing in-progress reboot annotation")
+		log.Printf("Clearing in-progress reboot annotation")
 		delete(node.Annotations, common.RebootInProgressAnnotation)
 		_, err := a.client.CoreV1().Nodes().Update(context.Background(), node, metav1.UpdateOptions{})
 		if err != nil {
-			glog.Errorf("Failed to remove %s annotation: %v", common.RebootInProgressAnnotation, err)
+			log.Fatalf("Failed to remove %s annotation: %v", common.RebootInProgressAnnotation, err)
 			return
 		}
 	}

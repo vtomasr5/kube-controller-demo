@@ -1,14 +1,19 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reboot-controller
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: reboot-controller
   template:
+    metadata:
+      labels:
+        app: reboot-controller
     spec:
       containers:
       - name: reboot-controller
-        image: TBD
+        image: vtomasr5/demo-reboot-controller:latest
         command:
         - ./reboot-controller
-        - --v=4

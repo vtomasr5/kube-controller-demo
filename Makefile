@@ -8,8 +8,14 @@ all: \
 
 images: GVERSION=$(shell $(CURDIR)/git-version.sh)
 images: bin/linux/reboot-agent bin/linux/reboot-controller
-	docker build -f Dockerfile-agent -t demo-reboot-agent:$(GVERSION) .
-	docker build -f Dockerfile-controller -t demo-reboot-controller:$(GVERSION) .
+	docker build -f Dockerfile-agent -t vtomasr5/demo-reboot-agent:$(GVERSION) .
+	docker build -f Dockerfile-agent -t vtomasr5/demo-reboot-agent:latest .
+	docker push vtomasr5/demo-reboot-agent:$(GVERSION)
+	docker push vtomasr5/demo-reboot-agent:latest
+	docker build -f Dockerfile-controller -t vtomasr5/demo-reboot-controller:$(GVERSION) .
+	docker build -f Dockerfile-controller -t vtomasr5/demo-reboot-controller:latest .
+	docker push vtomasr5/demo-reboot-controller:$(GVERSION)
+	docker push vtomasr5/demo-reboot-controller:latest
 
 check:
 	@find . -name vendor -prune -o -name '*.go' -exec gofmt -s -d {} +
